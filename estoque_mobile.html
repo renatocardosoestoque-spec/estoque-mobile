@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estoque Mobile</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --background: #F3F4F6;
+            --surface: #ffffff;
+            --text-main: #1F2937;
+            --text-secondary: #6B7280;
+            --border: #E5E7EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* --- Header --- */
+        header {
+            background: var(--surface);
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* --- Main Content Area --- */
+        #app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            padding-bottom: 80px; /* Space for FAB/Bottom nav if needed */
+        }
+
+        /* --- Welcome / Upload Screen --- */
+        #upload-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .upload-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-md);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* --- Stock List Area --- */
+        .search-bar {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: var(--background);
+            padding-bottom: 1rem;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            background: var(--surface);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+        }
+
+        .search-input-wrapper i {
+            color: var(--text-secondary);
+            margin-right: 0.75rem;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .filters-scroll {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .filters-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .product-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:active {
+            transform: scale(0.99);
+            background: #f9fafb;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 0; /* For truncation */
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stock-badge {
+            background: var(--background);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 3rem;
+            text-align: center;
+        }
+
+        .stock-badge.low { color: var(--danger); background: #FEF2F2; }
+        .stock-badge.medium { color: var(--warning); background: #FFFBEB; }
+        .stock-badge.good { color: var(--secondary); background: #ECFDF5; }
+
+        .indicator {
+            width: 4px;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .indicator.adjusted { background: var(--primary); }
+
+        /* --- Bottom Sheet Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--surface);
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1.5rem;
+            z-index: 101;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .sheet-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .adj-type-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .adj-option {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .adj-option.entrada.selected {
+            background: #ECFDF5;
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .adj-option.saida.selected {
+            background: #FEF2F2;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* --- Toast --- */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 200;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .toast.success { background: var(--secondary); }
+        .toast.error { background: var(--danger); }
+
+        /* --- Loading Overlay --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Floating Actions --- */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 90;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            font-size: 1.25rem;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        .fab:active {
+            transform: scale(0.9);
+        }
+
+        .fab.secondary {
+            background: white;
+            color: var(--text-main);
+            width: 48px;
+            height: 48px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header id="main-header" style="display:none;">
+        <div class="header-title">
+            <h1>Estoque Mobile</h1>
+            <p id="header-subtitle">0 produtos</p>
+        </div>
+        <div id="header-actions">
+            <!-- Icons added dynamically -->
+        </div>
+    </header>
+
+    <!-- Upload Screen -->
+    <div id="upload-screen">
+        <div class="upload-card">
+            <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:-20px;">
+                <button onclick="openConfig()" style="background:none; border:none; color:var(--text-secondary); cursor:pointer;">
+                    <i class="fas fa-cog" style="font-size:1.2rem;"></i>
+                </button>
+            </div>
+            
+            <i class="fas fa-cloud upload-icon" id="status-icon"></i>
+            <h2 style="margin-bottom: 0.5rem;" id="status-title">Carregar Estoque</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;" id="status-desc">Escolha uma opção para começar.</p>
+            
+            <button class="btn btn-primary" id="btn-cloud" onclick="syncWithCloud()" style="margin-bottom: 1rem; display: none;">
+                <i class="fas fa-sync-alt"></i> Sincronizar com Nuvem
+            </button>
+            
+            <label class="btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-main);">
+                <i class="fas fa-file-excel"></i> Carregar Arquivo Local
+                <input type="file" id="file-input" class="file-input" accept=".xlsx, .xls">
+            </label>
+        </div>
+    </div>
+
+    <!-- Config Modal -->
+    <div class="modal-overlay" id="config-overlay" onclick="closeConfig()"></div>
+    <div class="bottom-sheet" id="config-sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Configuração da Nuvem</h3>
+        
+        <div class="form-group">
+            <label class="form-label">URL do Script Google (Web App)</label>
+            <input type="text" id="api-url" class="form-input" placeholder="https://script.google.com/macros/s/..." onchange="saveConfig()">
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.5rem;">
+                Cole aqui o link gerado pelo Google Apps Script.
+            </p>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveConfigAndClose()">
+            Salvar e Conectar
+        </button>
+    </div>
+
+    <!-- App Content (Hidden initially) -->
+    <div id="app-content" style="display: none;">
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" class="search-input" placeholder="Buscar produto...">
+                <i class="fas fa-times" id="clear-search" style="display: none; margin-right: 0;" onclick="clearSearch()"></i>
+            </div>
+        </div>
+
+        <div class="filters-scroll" id="category-filters">
+            <div class="filter-chip active" onclick="filterByClass('')">Todos</div>
+            <!-- Categories injected here -->
+        </div>
+
+        <div id="product-list" class="product-list">
+            <!-- Products injected here -->
+        </div>
+    </div>
+
+    <!-- FABs -->
+    <div class="fab-container" id="fabs" style="display: none;">
+        <button class="fab secondary" onclick="generatePDF()" title="Exportar PDF">
+            <i class="fas fa-file-pdf"></i>
+        </button>
+        <button class="fab secondary" onclick="resetData()" title="Limpar Dados / Novo Upload" style="background: #EF4444; color: white;">
+            <i class="fas fa-trash"></i>
+        </button>
+        <button class="fab" onclick="showHistory()" title="Ver Histórico">
+            <i class="fas fa-history"></i>
+        </button>
+    </div>
+
+    <!-- Edit Modal (Bottom Sheet) -->
+    <div class="modal-overlay" id="edit-overlay" onclick="closeModal()"></div>
+    <div class="bottom-sheet" id="edit-sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title" id="modal-product-title">Ajustar Estoque</h3>
+        
+        <input type="hidden" id="modal-index">
+        
+        <div class="form-group">
+            <label class="form-label">Estoque Atual</label>
+            <input type="number" id="modal-current-stock" class="form-input" readonly style="background: #f3f4f6;">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Estoque Físico (Contagem)</label>
+            <input type="number" id="modal-physical-stock" class="form-input" placeholder="Digite o valor contado" inputmode="numeric">
+        </div>
+
+        <div class="adj-type-selector">
+            <div class="adj-option entrada" id="opt-entrada">
+                <i class="fas fa-arrow-up"></i> Entrada
+            </div>
+            <div class="adj-option saida" id="opt-saida">
+                <i class="fas fa-arrow-down"></i> Saída
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Diferença</label>
+            <input type="text" id="modal-diff" class="form-input" readonly style="font-weight: bold;">
+        </div>
+
+        <button class="btn btn-primary" onclick="confirmAdjustment()">
+            Confirmar Ajuste
+        </button>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal-overlay" id="history-overlay" onclick="closeHistory()"></div>
+    <div class="bottom-sheet" id="history-sheet" style="height: 80vh;">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Histórico de Ajustes</h3>
+        <div id="history-list" style="overflow-y: auto; max-height: 60vh;">
+            <!-- History items -->
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="closeHistory()">Fechar</button>
+    </div>
+
+    <!-- Loading & Toast -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem; font-weight: 500;">Processando...</p>
+    </div>
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i> <span>Mensagem</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- UI Helper -->
+    <script>
+        // Config Modal Logic
+        function openConfig() {
+            document.getElementById('config-overlay').classList.add('active');
+            document.getElementById('config-sheet').classList.add('active');
+        }
+
+        function closeConfig() {
+            document.getElementById('config-overlay').classList.remove('active');
+            document.getElementById('config-sheet').classList.remove('active');
+        }
+
+        function saveConfig() {
+            const url = document.getElementById('api-url').value.trim();
+            if (url) {
+                localStorage.setItem('googleScriptUrl', url);
+                apiUrl = url;
+            }
+        }
+
+        function saveConfigAndClose() {
+            saveConfig();
+            closeConfig();
+            if (apiUrl) {
+                document.getElementById('btn-cloud').style.display = 'flex';
+                document.getElementById('status-title').innerText = 'Conectado à Nuvem';
+                document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
+                syncWithCloud();
+            }
+        }
+        
+        // State
+        let stockData = [];
+        let classifications = new Set();
+        let currentFilter = '';
+        let adjustmentType = 'saida';
+        let apiUrl = localStorage.getItem('googleScriptUrl') || '';
+
+        // DOM Elements
+        const appContent = document.getElementById('app-content');
+        const uploadScreen = document.getElementById('upload-screen');
+        const fileInput = document.getElementById('file-input');
+        const productList = document.getElementById('product-list');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const toast = document.getElementById('toast');
+        const btnCloud = document.getElementById('btn-cloud');
+        
+        // Modal Elements
+        const editOverlay = document.getElementById('edit-overlay');
+        const editSheet = document.getElementById('edit-sheet');
+        const configOverlay = document.getElementById('config-overlay');
+        const configSheet = document.getElementById('config-sheet');
+        const modalPhysical = document.getElementById('modal-physical-stock');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (apiUrl) {
+                document.getElementById('api-url').value = apiUrl;
+                btnCloud.style.display = 'flex';
+                document.getElementById('status-title').innerText = 'Conectado à Nuvem';
+                document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
+            }
+            loadFromLocal();
+        });
+
+        fileInput.addEventListener('change', loadExcelData);
+        
+        // Search
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            document.getElementById('clear-search').style.display = val ? 'block' : 'none';
+            renderList(val);
+        });
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            input.focus();
+            document.getElementById('clear-search').style.display = 'none';
+            renderList();
+        }
+
+        // --- Core Functions ---
+
+        async function syncWithCloud() {
+            if (!apiUrl) {
+                openConfig();
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Erro na rede');
+                
+                const json = await response.json();
+                if (json.status === 'error') throw new Error(json.message);
+                
+                // Processar dados vindos da planilha
+                const success = processCloudData(json.data);
+                
+                if (success) {
+                    showToast('Sincronizado com sucesso!', 'success');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Erro ao sincronizar: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function processCloudData(data) {
+            stockData = [];
+            classifications.clear();
+            
+            if (!data || data.length < 2) {
+                showToast('Planilha vazia ou formato inválido', 'error');
+                return false;
+            }
+            
+            // Detectar linha de cabeçalho (procura nas primeiras 20 linhas)
+            let headerRowIndex = -1;
+            let idxProd = -1;
+            let idxClass = -1;
+            let idxStock = -1;
+
+            for (let i = 0; i < Math.min(20, data.length); i++) {
+                const row = data[i].map(c => String(c).toLowerCase());
+                const p = row.findIndex(c => c.includes('produto') || c.includes('descri'));
+                const s = row.findIndex(c => c.includes('estoque') || c.includes('quant'));
+                
+                if (p > -1 && s > -1) {
+                    headerRowIndex = i;
+                    idxProd = p;
+                    idxStock = s;
+                    idxClass = row.findIndex(c => c.includes('class') || c.includes('categ'));
+                    break;
+                }
+            }
+            
+            if (headerRowIndex === -1) {
+                showToast('Colunas Produto/Estoque não encontradas. Verifique a planilha.', 'error');
+                return false;
+            }
+            
+            // Processar linhas
+            for (let i = headerRowIndex + 1; i < data.length; i++) {
+                const row = data[i];
+                // Verifica se a linha tem dados suficientes
+                if (!row || row.length <= idxProd) continue;
+                
+                const product = String(row[idxProd] || '').trim();
+                if (!product || product.match(/total/i)) continue;
+
+                const classification = idxClass > -1 ? String(row[idxClass] || 'GERAL').toUpperCase() : 'GERAL';
+                
+                // Tratar número do estoque (pode vir como string ou number)
+                let rawStock = row[idxStock];
+                let stock = 0;
+                
+                if (typeof rawStock === 'number') {
+                    stock = rawStock;
+                } else {
+                    stock = parseFloat(String(rawStock).replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+                }
+                
+                stock = Math.max(0, Math.floor(stock));
+
+                stockData.push({
+                    id: i, // Row index is ID
+                    product: product.toUpperCase(),
+                    classification: classification,
+                    originalStock: stock,
+                    stock: stock,
+                    adjustments: []
+                });
+                
+                classifications.add(classification);
+            }
+            
+            if (stockData.length === 0) {
+                showToast('Nenhum produto válido encontrado.', 'error');
+                return false;
+            }
+
+            stockData.sort((a, b) => a.product.localeCompare(b.product));
+            
+            // Switch UI
+            uploadScreen.style.display = 'none';
+            document.getElementById('main-header').style.display = 'flex';
+            appContent.style.display = 'block';
+            document.getElementById('fabs').style.display = 'flex';
+            
+            saveToLocal();
+            renderFilters();
+            renderList();
+            updateSubtitle();
+            
+            return true;
+        }
+
+        function loadExcelData() {
+            if (!fileInput.files.length) return;
+            
+            showLoading(true);
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processData(workbook);
+                    
+                    // Switch view
+                    uploadScreen.style.display = 'none';
+                    document.getElementById('main-header').style.display = 'flex';
+                    appContent.style.display = 'block';
+                    document.getElementById('fabs').style.display = 'flex';
+                    
+                    saveToLocal();
+                    showToast(`${stockData.length} produtos carregados!`, 'success');
+                } catch (error) {
+                    console.error(error);
+                    showToast('Erro ao ler arquivo', 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processData(workbook) {
+            stockData = [];
+            classifications.clear();
+            
+            // Find sheet
+            let sheetName = workbook.SheetNames.find(n => n.match(/balanço|base/i)) || workbook.SheetNames[0];
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+            
+            // Find header
+            let headerRow = 3; // Default fallback
+            for (let i = 0; i < Math.min(20, json.length); i++) {
+                const row = json[i].map(c => String(c).toLowerCase());
+                if (row.includes('produtos') && row.includes('estoque')) {
+                    headerRow = i;
+                    break;
+                }
+            }
+
+            // Parse rows
+            for (let i = headerRow + 1; i < json.length; i++) {
+                const row = json[i];
+                if (!row || row.length < 4) continue;
+                
+                const rawClass = String(row[1] || '').trim().toUpperCase();
+                const product = String(row[2] || '').trim();
+                let stock = row[3];
+                
+                // Validate
+                if (!product || product.match(/total/i) || product === '0') continue;
+                
+                // Clean stock number
+                if (typeof stock === 'string') {
+                    stock = parseFloat(stock.replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+                }
+                stock = Math.max(0, Math.floor(Number(stock) || 0));
+                
+                const classification = rawClass || 'GERAL';
+                
+                // Add
+                stockData.push({
+                    id: i, // Unique ID based on row index
+                    product: product.toUpperCase(),
+                    classification: classification,
+                    originalStock: stock,
+                    stock: stock,
+                    adjustments: []
+                });
+                
+                classifications.add(classification);
+            }
+            
+            // Sort
+            stockData.sort((a, b) => a.product.localeCompare(b.product));
+            
+            renderFilters();
+            renderList();
+            updateSubtitle();
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('category-filters');
+            let html = '<div class="filter-chip active" onclick="filterByClass(\'\', this)">Todos</div>';
+            
+            Array.from(classifications).sort().forEach(c => {
+                html += `<div class="filter-chip" onclick="filterByClass('${c}', this)">${getEmoji(c)} ${c}</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterByClass(cls, el) {
+            currentFilter = cls;
+            
+            // Update UI
+            if (el) {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+            }
+            
+            renderList(document.getElementById('search-input').value);
+        }
+
+        function renderList(search = '') {
+            search = search.toLowerCase();
+            const filtered = stockData.filter(item => {
+                const matchSearch = item.product.toLowerCase().includes(search);
+                const matchClass = currentFilter ? item.classification === currentFilter : true;
+                return matchSearch && matchClass;
+            });
+
+            if (filtered.length === 0) {
+                productList.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                        <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>Nenhum produto encontrado</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(item => {
+                const stockClass = item.stock < 5 ? 'low' : (item.stock < 10 ? 'medium' : 'good');
+                const hasAdj = item.adjustments.length > 0;
+                
+                html += `
+                <div class="product-card" onclick="openEdit(${stockData.indexOf(item)})">
+                    ${hasAdj ? '<div class="indicator adjusted"></div>' : ''}
+                    <div class="product-info">
+                        <div class="product-name">${item.product}</div>
+                        <div class="product-meta">
+                            <span>${getEmoji(item.classification)} ${item.classification}</span>
+                            ${hasAdj ? `<span style="color:var(--primary); font-weight:600; font-size:0.75rem;"><i class="fas fa-pen"></i> Editado</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="stock-badge ${stockClass}">
+                        ${item.stock}
+                    </div>
+                </div>`;
+            });
+            
+            productList.innerHTML = html;
+        }
+
+        function getEmoji(cls) {
+            if (cls.includes('LIMPEZA')) return '🧹';
+            if (cls.includes('PAPEL')) return '🧻';
+            if (cls.includes('SACO')) return '🗑️';
+            if (cls.includes('COPO')) return '🥤';
+            if (cls.includes('ALCOOL')) return '🧴';
+            return '📦';
+        }
+
+        // --- Edit Logic ---
+
+        function openEdit(index) {
+            const item = stockData[index];
+            document.getElementById('modal-index').value = index;
+            document.getElementById('modal-product-title').innerText = item.product;
+            document.getElementById('modal-current-stock').value = item.stock;
+            document.getElementById('modal-physical-stock').value = '';
+            document.getElementById('modal-diff').value = '-';
+            
+            // Reset state
+            document.getElementById('opt-entrada').classList.remove('selected');
+            document.getElementById('opt-saida').classList.remove('selected');
+            
+            editOverlay.classList.add('active');
+            editSheet.classList.add('active');
+            
+            setTimeout(() => modalPhysical.focus(), 300);
+        }
+
+        modalPhysical.addEventListener('input', calculateDiff);
+
+        function calculateDiff() {
+            const current = parseInt(document.getElementById('modal-current-stock').value) || 0;
+            const physical = parseInt(modalPhysical.value);
+            const diffEl = document.getElementById('modal-diff');
+            
+            const entradaBtn = document.getElementById('opt-entrada');
+            const saidaBtn = document.getElementById('opt-saida');
+            
+            if (isNaN(physical)) {
+                diffEl.value = '-';
+                entradaBtn.classList.remove('selected');
+                saidaBtn.classList.remove('selected');
+                return;
+            }
+            
+            const diff = physical - current;
+            
+            if (diff > 0) {
+                adjustmentType = 'entrada';
+                entradaBtn.classList.add('selected');
+                saidaBtn.classList.remove('selected');
+                diffEl.value = `+${diff} (Entrada)`;
+                diffEl.style.color = 'var(--secondary)';
+            } else if (diff < 0) {
+                adjustmentType = 'saida';
+                saidaBtn.classList.add('selected');
+                entradaBtn.classList.remove('selected');
+                diffEl.value = `${diff} (Saída)`;
+                diffEl.style.color = 'var(--danger)';
+            } else {
+                diffEl.value = 'Sem alteração';
+                diffEl.style.color = 'var(--text-secondary)';
+                entradaBtn.classList.remove('selected');
+                saidaBtn.classList.remove('selected');
+            }
+        }
+
+        function confirmAdjustment() {
+            const index = document.getElementById('modal-index').value;
+            const item = stockData[index];
+            const physical = parseInt(modalPhysical.value);
+            
+            if (isNaN(physical)) {
+                showToast('Digite um valor válido', 'error');
+                return;
+            }
+            
+            const diff = physical - item.stock;
+            if (diff !== 0) {
+                item.stock = physical;
+                item.adjustments.push({
+                    date: new Date(),
+                    type: diff > 0 ? 'Entrada' : 'Saída',
+                    qty: Math.abs(diff),
+                    final: physical
+                });
+                showToast('Estoque atualizado!', 'success');
+                saveToLocal();
+                
+                // Se estiver conectado, tenta atualizar na nuvem
+                if (apiUrl) {
+                    // Usar setTimeout para não travar a UI
+                    setTimeout(() => updateCloudStock(item.id, physical), 10);
+                }
+            }
+            
+            closeModal();
+            renderList(document.getElementById('search-input').value);
+            updateSubtitle();
+        }
+
+        async function updateCloudStock(rowIndex, newStock) {
+            try {
+                // Notifica inicio do envio (opcional, pode ser removido se poluir)
+                // showToast('Enviando para nuvem...', 'success');
+                
+                const payload = {
+                    action: 'update',
+                    rowIndex: rowIndex, 
+                    newStock: newStock
+                };
+
+                // Fetch mode 'no-cors' é o padrão para forms do Google Script sem preflight complexo
+                // Mas isso significa que não sabemos se DEU ERRO lá no servidor (status é opaco).
+                // Porém, se a rede falhar, cai no catch.
+                
+                await fetch(apiUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('Comando enviado para nuvem (Row ' + rowIndex + ')');
+                // Como é no-cors, assumimos sucesso se não jogou erro de rede.
+            } catch (e) {
+                console.error('Erro ao enviar para nuvem', e);
+                showToast('Erro de conexão com nuvem', 'error');
+            }
+        }
+
+        function closeModal() {
+            editOverlay.classList.remove('active');
+            editSheet.classList.remove('active');
+        }
+
+        // --- History & PDF ---
+
+        function showHistory() {
+            const historyList = document.getElementById('history-list');
+            const adjusted = stockData.filter(i => i.adjustments.length > 0);
+            
+            if (adjusted.length === 0) {
+                historyList.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-secondary);">Nenhum ajuste realizado.</p>';
+            } else {
+                let html = '';
+                adjusted.forEach(item => {
+                    item.adjustments.forEach(adj => {
+                        html += `
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                            <div style="font-weight:600;">${item.product}</div>
+                            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; font-size:0.9rem;">
+                                <span style="color:${adj.type === 'Entrada' ? 'var(--secondary)' : 'var(--danger)'}">
+                                    ${adj.type === 'Entrada' ? '+' : '-'}${adj.qty}
+                                </span>
+                                <span style="color:var(--text-secondary);">
+                                    ${adj.date.toLocaleTimeString().slice(0,5)}
+                                </span>
+                            </div>
+                        </div>`;
+                    });
+                });
+                historyList.innerHTML = html;
+            }
+            
+            document.getElementById('history-overlay').classList.add('active');
+            document.getElementById('history-sheet').classList.add('active');
+        }
+
+        function closeHistory() {
+            document.getElementById('history-overlay').classList.remove('active');
+            document.getElementById('history-sheet').classList.remove('active');
+        }
+
+        function generatePDF() {
+            const adjusted = stockData.filter(i => i.adjustments.length > 0);
+            if (adjusted.length === 0) {
+                showToast('Nada para exportar', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // Create hidden temp container for PDF generation
+            const tempDiv = document.createElement('div');
+            tempDiv.style.width = '800px';
+            tempDiv.style.padding = '40px';
+            tempDiv.style.background = 'white';
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.top = '-9999px';
+            
+            const now = new Date();
+            let html = `
+                <h2 style="text-align:center; color:#333; margin-bottom:5px;">Relatório de Ajustes de Estoque</h2>
+                <p style="text-align:center; color:#666; margin-bottom:20px;">Gerado em ${now.toLocaleDateString()} às ${now.toLocaleTimeString()}</p>
+                
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                    <thead>
+                        <tr style="background:#f3f4f6; text-align:left;">
+                            <th style="padding:10px; border-bottom:2px solid #ddd;">Produto</th>
+                            <th style="padding:10px; border-bottom:2px solid #ddd; text-align:center;">Original</th>
+                            <th style="padding:10px; border-bottom:2px solid #ddd; text-align:center;">Atual</th>
+                            <th style="padding:10px; border-bottom:2px solid #ddd; text-align:center;">Diferença</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            adjusted.forEach(item => {
+                const diff = item.stock - item.originalStock;
+                const color = diff >= 0 ? '#10B981' : '#EF4444';
+                const sign = diff > 0 ? '+' : '';
+                
+                html += `
+                    <tr>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">${item.product}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${item.originalStock}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${item.stock}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:${color}; font-weight:bold;">
+                            ${sign}${diff}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            tempDiv.innerHTML = html;
+            document.body.appendChild(tempDiv);
+            
+            html2canvas(tempDiv).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                const imgWidth = 210;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Relatorio_Estoque_${now.toISOString().slice(0,10)}.pdf`);
+                
+                document.body.removeChild(tempDiv);
+                showLoading(false);
+                showToast('PDF salvo com sucesso!', 'success');
+            }).catch(err => {
+                console.error(err);
+                showLoading(false);
+                showToast('Erro ao gerar PDF', 'error');
+            });
+        }
+
+        // --- Utils ---
+
+        function saveToLocal() {
+            try {
+                const dataToSave = {
+                    stockData: stockData,
+                    classifications: Array.from(classifications),
+                    timestamp: new Date().getTime()
+                };
+                localStorage.setItem('estoqueData', JSON.stringify(dataToSave));
+            } catch (e) {
+                console.error("Erro ao salvar localmente", e);
+            }
+        }
+
+        function loadFromLocal() {
+            const saved = localStorage.getItem('estoqueData');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    stockData = parsed.stockData;
+                    // Restore dates in adjustments
+                    stockData.forEach(item => {
+                        item.adjustments.forEach(adj => {
+                            adj.date = new Date(adj.date);
+                        });
+                    });
+                    
+                    classifications = new Set(parsed.classifications);
+                    
+                    // Switch view
+                    uploadScreen.style.display = 'none';
+                    document.getElementById('main-header').style.display = 'flex';
+                    appContent.style.display = 'block';
+                    document.getElementById('fabs').style.display = 'flex';
+                    
+                    renderFilters();
+                    renderList();
+                    updateSubtitle();
+                    showToast('Dados restaurados da memória!', 'success');
+                } catch (e) {
+                    console.error("Erro ao carregar dados", e);
+                    localStorage.removeItem('estoqueData');
+                }
+            }
+        }
+
+        function resetData() {
+            if (confirm('Tem certeza? Isso apagará todos os dados atuais e ajustes não salvos.')) {
+                localStorage.removeItem('estoqueData');
+                location.reload();
+            }
+        }
+
+        function updateSubtitle() {
+            document.getElementById('header-subtitle').innerText = `${stockData.length} produtos totais`;
+        }
+
+        function showLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+
+        function showToast(msg, type = 'success') {
+            toast.querySelector('span').innerText = msg;
+            toast.className = `toast ${type} show`;
+            
+            const icon = toast.querySelector('i');
+            icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
