@@ -2,8 +2,43 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Estoque Mobile</title>
+    
+    <!-- Configurações PWA essenciais -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Estoque Mobile">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4F46E5">
+    
+    <!-- Manifest para PWA -->
+    <link rel="manifest" id="app-manifest" href="data:application/json,{
+      \"name\": \"Estoque Mobile\",
+      \"short_name\": \"Estoque\",
+      \"description\": \"Controle de estoque mobile\",
+      \"start_url\": \"./\",
+      \"display\": \"standalone\",
+      \"background_color\": \"#F3F4F6\",
+      \"theme_color\": \"#4F46E5\",
+      \"orientation\": \"portrait\",
+      \"scope\": \"./\",
+      \"icons\": [
+        {
+          \"src\": \"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0iIzRGMDRFNSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKZokE8L3RleHQ+PC9zdmc+\",
+          \"sizes\": \"192x192\",
+          \"type\": \"image/svg+xml\"
+        },
+        {
+          \"src\": \"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0iIzRGMDRFNSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKZokE8L3RleHQ+PC9zdmc+\",
+          \"sizes\": \"512x512\",
+          \"type\": \"image/svg+xml\"
+        }
+      ]
+    }">
+
+    <!-- Ícones para iOS -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0iIzRGMDRFNSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKZokE8L3RleHQ+PC9zdmc+">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -33,16 +68,39 @@
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
 
-        body {
+        html, body {
+            height: 100%;
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
             background-color: var(--background);
             color: var(--text-main);
-            height: 100vh;
+        }
+
+        body {
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* App-like feel */
+            overflow: hidden;
+        }
+
+        /* Corrige PWA para iPhone notch/tela cheia */
+        @supports (padding: max(0px)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            header {
+                padding-top: max(1rem, env(safe-area-inset-top));
+            }
+            
+            .modal-overlay, .bottom-sheet {
+                padding-top: env(safe-area-inset-top);
+            }
         }
 
         /* --- Header --- */
@@ -73,8 +131,9 @@
         #app-content {
             flex: 1;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 1rem;
-            padding-bottom: 80px; /* Space for FAB/Bottom nav if needed */
+            padding-bottom: 80px;
         }
 
         /* --- Welcome / Upload Screen --- */
@@ -162,6 +221,12 @@
             width: 100%;
             font-size: 1rem;
             color: var(--text-main);
+            background: transparent;
+        }
+
+        /* Corrige inputs em iOS */
+        input, textarea, select {
+            font-size: 16px !important;
         }
 
         .filters-scroll {
@@ -222,7 +287,7 @@
 
         .product-info {
             flex: 1;
-            min-width: 0; /* For truncation */
+            min-width: 0;
         }
 
         .product-name {
@@ -465,6 +530,31 @@
             height: 48px;
             font-size: 1rem;
         }
+
+        /* PWA Mode */
+        body.pwa-mode {
+            background: var(--surface);
+        }
+
+        /* Botão de ajuda PWA */
+        #pwa-help-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 9999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -613,6 +703,9 @@
         <i class="fas fa-check-circle"></i> <span>Mensagem</span>
     </div>
 
+    <!-- Botão de ajuda PWA -->
+    <button id="pwa-help-btn" onclick="showInstallHelp()">📲</button>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -620,6 +713,127 @@
 
     <!-- UI Helper -->
     <script>
+        // ===== PWA CONFIGURATION =====
+        // Detecta se está rodando como PWA
+        function isRunningAsPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                   window.navigator.standalone === true;
+        }
+
+        // Aplica estilos específicos para PWA
+        if (isRunningAsPWA()) {
+            document.documentElement.style.setProperty('--background', '#ffffff');
+            document.body.classList.add('pwa-mode');
+            
+            // Remove barras de endereço em PWA
+            window.scrollTo(0, 1);
+        }
+
+        // Força recálculo em iOS
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    window.scrollTo(0, 0);
+                }, 100);
+            });
+        }
+
+        // Instalação para Android
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostra botão de instalação
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = '📲 INSTALAR APP';
+            installBtn.style.cssText = `
+                position: fixed; bottom: 100px; right: 20px;
+                background: linear-gradient(135deg, #4F46E5, #818CF8);
+                color: white; border: none; padding: 15px 25px;
+                border-radius: 50px; font-weight: bold;
+                box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+                z-index: 10000; font-size: 16px;
+                animation: pulse 2s infinite;
+            `;
+            
+            // Estilo de animação
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                    100% { transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            installBtn.onclick = () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    installBtn.remove();
+                });
+            };
+            
+            document.body.appendChild(installBtn);
+            
+            // Remove após 30 segundos
+            setTimeout(() => installBtn.remove(), 30000);
+        });
+
+        // Função para mostrar instruções de instalação
+        function showInstallHelp() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            let msg = '';
+            if (isIOS) {
+                msg = '📱 Para iPhone:\n\n1. Toque no ícone de compartilhar (⎙)\n2. Role PARA BAIXO na lista\n3. Toque em "Adicionar à Tela de Início"\n4. Nomeie como "Estoque Mobile"\n5. Toque em "Adicionar"';
+            } else if (isAndroid) {
+                msg = '📱 Para Android:\n\n1. Toque nos 3 pontos (⋮)\n2. Toque em "Instalar app"\n3. Toque em "Instalar"\n\nSe não aparecer, procure por "Adicionar à tela inicial"';
+            } else {
+                msg = '📱 Abra este link no CELULAR e use o menu do navegador para instalar como app.';
+            }
+            
+            alert(msg);
+        }
+
+        // Instruções para iPhone
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            setTimeout(() => {
+                if (!window.navigator.standalone) {
+                    const iosTip = document.createElement('div');
+                    iosTip.innerHTML = `
+                        <div style="
+                            position: fixed; bottom: 20px; left: 20px; right: 20px;
+                            background: white; padding: 15px; border-radius: 15px;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 10000;
+                            border-left: 5px solid #4F46E5;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="font-size: 24px;">📱</div>
+                                <div>
+                                    <strong>Instalar como App:</strong><br>
+                                    1. Toque em ⎙<br>
+                                    2. Role para baixo<br>
+                                    3. "Adicionar à Tela de Início"
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" 
+                                        style="margin-left: auto; background: none; border: none; font-size: 20px;">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(iosTip);
+                    
+                    // Remove após 15 segundos
+                    setTimeout(() => iosTip.remove(), 15000);
+                }
+            }, 3000);
+        }
+
+        // ===== APP LOGIC =====
         // Config Modal Logic
         function openConfig() {
             document.getElementById('config-overlay').classList.add('active');
@@ -646,7 +860,6 @@
                 document.getElementById('btn-cloud').style.display = 'flex';
                 document.getElementById('status-title').innerText = 'Conectado à Nuvem';
                 document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
-                syncWithCloud();
             }
         }
         
@@ -710,115 +923,234 @@
             }
 
             showLoading(true);
+            showToast('Conectando com nuvem...', 'success');
+            
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error('Erro na rede');
+                // Método 1: Tentar fetch normal
+                console.log('Tentando fetch para:', apiUrl);
                 
-                const json = await response.json();
-                if (json.status === 'error') throw new Error(json.message);
+                // Adicionar timestamp para evitar cache
+                const urlWithCacheBuster = apiUrl + (apiUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
                 
-                // Processar dados vindos da planilha
-                const success = processCloudData(json.data);
+                const response = await fetch(urlWithCacheBuster, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                console.log('Resposta recebida:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                console.log('Texto recebido:', text.substring(0, 200));
+                
+                // Tentar parsear como JSON
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch (e) {
+                    // Se não for JSON, pode ser JSONP ou texto simples
+                    // Tenta extrair JSON de dentro de callback
+                    const match = text.match(/callback\((.+)\)/);
+                    if (match) {
+                        json = JSON.parse(match[1]);
+                    } else {
+                        throw new Error('Resposta não é JSON válido');
+                    }
+                }
+                
+                if (json.status === 'error') {
+                    throw new Error(json.message);
+                }
+                
+                // Processar dados
+                const success = processCloudData(json.data || json);
                 
                 if (success) {
                     showToast('Sincronizado com sucesso!', 'success');
                 }
             } catch (error) {
-                console.error(error);
-                showToast('Erro ao sincronizar: ' + error.message, 'error');
+                console.error('Erro detalhado:', error);
+                showToast('Erro: ' + error.message, 'error');
+                
+                // Método alternativo: usar script tag (JSONP)
+                try {
+                    await fetchViaJSONP();
+                } catch (jsonpError) {
+                    console.error('JSONP também falhou:', jsonpError);
+                }
             } finally {
                 showLoading(false);
             }
         }
 
+        // Método alternativo JSONP
+        function fetchViaJSONP() {
+            return new Promise((resolve, reject) => {
+                if (!apiUrl) {
+                    reject(new Error('URL não configurada'));
+                    return;
+                }
+                
+                const callbackName = 'jsonp_callback_' + Date.now();
+                const script = document.createElement('script');
+                
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    
+                    const success = processCloudData(data.data || data);
+                    if (success) {
+                        showToast('Sincronizado via JSONP!', 'success');
+                        resolve(data);
+                    } else {
+                        reject(new Error('Falha ao processar dados JSONP'));
+                    }
+                };
+                
+                // Adicionar callback à URL
+                let jsonpUrl = apiUrl;
+                if (!jsonpUrl.includes('callback=')) {
+                    jsonpUrl += (jsonpUrl.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+                }
+                
+                script.src = jsonpUrl;
+                script.onerror = () => {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    reject(new Error('Falha ao carregar script'));
+                };
+                
+                document.body.appendChild(script);
+                setTimeout(() => {
+                    if (script.parentNode) {
+                        delete window[callbackName];
+                        document.body.removeChild(script);
+                        reject(new Error('Timeout JSONP'));
+                    }
+                }, 10000);
+            });
+        }
+
         function processCloudData(data) {
-            stockData = [];
-            classifications.clear();
-            
-            if (!data || data.length < 2) {
-                showToast('Planilha vazia ou formato inválido', 'error');
-                return false;
-            }
-            
-            // Detectar linha de cabeçalho (procura nas primeiras 20 linhas)
-            let headerRowIndex = -1;
-            let idxProd = -1;
-            let idxClass = -1;
-            let idxStock = -1;
-
-            for (let i = 0; i < Math.min(20, data.length); i++) {
-                const row = data[i].map(c => String(c).toLowerCase());
-                const p = row.findIndex(c => c.includes('produto') || c.includes('descri'));
-                const s = row.findIndex(c => c.includes('estoque') || c.includes('quant'));
+            try {
+                stockData = [];
+                classifications.clear();
                 
-                if (p > -1 && s > -1) {
-                    headerRowIndex = i;
-                    idxProd = p;
-                    idxStock = s;
-                    idxClass = row.findIndex(c => c.includes('class') || c.includes('categ'));
-                    break;
+                if (!data || !Array.isArray(data)) {
+                    showToast('Dados inválidos da nuvem', 'error');
+                    return false;
                 }
-            }
-            
-            if (headerRowIndex === -1) {
-                showToast('Colunas Produto/Estoque não encontradas. Verifique a planilha.', 'error');
-                return false;
-            }
-            
-            // Processar linhas
-            for (let i = headerRowIndex + 1; i < data.length; i++) {
-                const row = data[i];
-                // Verifica se a linha tem dados suficientes
-                if (!row || row.length <= idxProd) continue;
                 
-                const product = String(row[idxProd] || '').trim();
-                if (!product || product.match(/total/i)) continue;
-
-                const classification = idxClass > -1 ? String(row[idxClass] || 'GERAL').toUpperCase() : 'GERAL';
-                
-                // Tratar número do estoque (pode vir como string ou number)
-                let rawStock = row[idxStock];
-                let stock = 0;
-                
-                if (typeof rawStock === 'number') {
-                    stock = rawStock;
+                // Se data é um array de arrays (planilha)
+                if (Array.isArray(data[0])) {
+                    // Encontrar cabeçalhos
+                    let idxProd = -1, idxClass = -1, idxStock = -1;
+                    
+                    for (let i = 0; i < Math.min(5, data.length); i++) {
+                        const row = data[i].map(c => String(c).toLowerCase());
+                        
+                        // Procurar colunas
+                        if (idxProd === -1) idxProd = row.findIndex(c => c.includes('produto') || c.includes('descri'));
+                        if (idxStock === -1) idxStock = row.findIndex(c => c.includes('estoque') || c.includes('quant'));
+                        if (idxClass === -1) idxClass = row.findIndex(c => c.includes('class') || c.includes('categ'));
+                        
+                        if (idxProd !== -1 && idxStock !== -1) {
+                            // Processar a partir da próxima linha
+                            for (let j = i + 1; j < data.length; j++) {
+                                addProductFromRow(data[j], idxProd, idxClass, idxStock, j);
+                            }
+                            break;
+                        }
+                    }
                 } else {
-                    stock = parseFloat(String(rawStock).replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+                    // Se data já é array de objetos
+                    data.forEach((item, index) => {
+                        addProductFromObject(item, index);
+                    });
                 }
                 
-                stock = Math.max(0, Math.floor(stock));
-
-                stockData.push({
-                    id: i, // Row index is ID
-                    product: product.toUpperCase(),
-                    classification: classification,
-                    originalStock: stock,
-                    stock: stock,
-                    adjustments: []
-                });
+                if (stockData.length === 0) {
+                    showToast('Nenhum produto encontrado na nuvem', 'error');
+                    return false;
+                }
                 
-                classifications.add(classification);
-            }
-            
-            if (stockData.length === 0) {
-                showToast('Nenhum produto válido encontrado.', 'error');
+                // Ordenar
+                stockData.sort((a, b) => a.product.localeCompare(b.product));
+                
+                // Atualizar UI
+                uploadScreen.style.display = 'none';
+                document.getElementById('main-header').style.display = 'flex';
+                appContent.style.display = 'block';
+                document.getElementById('fabs').style.display = 'flex';
+                
+                saveToLocal();
+                renderFilters();
+                renderList();
+                updateSubtitle();
+                showToast(`${stockData.length} produtos carregados da nuvem!`, 'success');
+                
+                return true;
+            } catch (error) {
+                console.error('Erro no processCloudData:', error);
+                showToast('Erro ao processar dados: ' + error.message, 'error');
                 return false;
             }
+        }
 
-            stockData.sort((a, b) => a.product.localeCompare(b.product));
+        function addProductFromRow(row, idxProd, idxClass, idxStock, id) {
+            if (!row || row.length <= idxProd) return;
             
-            // Switch UI
-            uploadScreen.style.display = 'none';
-            document.getElementById('main-header').style.display = 'flex';
-            appContent.style.display = 'block';
-            document.getElementById('fabs').style.display = 'flex';
+            const product = String(row[idxProd] || '').trim();
+            if (!product || product.match(/total|soma|^$/i)) return;
             
-            saveToLocal();
-            renderFilters();
-            renderList();
-            updateSubtitle();
+            const classification = idxClass > -1 ? String(row[idxClass] || 'GERAL').toUpperCase() : 'GERAL';
             
-            return true;
+            let rawStock = idxStock > -1 ? row[idxStock] : 0;
+            let stock = 0;
+            
+            if (typeof rawStock === 'number') {
+                stock = Math.floor(rawStock);
+            } else if (typeof rawStock === 'string') {
+                stock = parseInt(rawStock.replace(/[^\d.,-]/g, '')) || 0;
+            }
+            
+            stock = Math.max(0, stock);
+            
+            stockData.push({
+                id: id,
+                product: product.toUpperCase(),
+                classification: classification,
+                originalStock: stock,
+                stock: stock,
+                adjustments: []
+            });
+            
+            classifications.add(classification);
+        }
+
+        function addProductFromObject(obj, id) {
+            const product = String(obj.produto || obj.product || obj.descricao || '').trim();
+            if (!product) return;
+            
+            const classification = String(obj.classificacao || obj.category || obj.categoria || 'GERAL').toUpperCase();
+            const stock = Math.max(0, parseInt(obj.estoque || obj.stock || obj.quantidade || 0));
+            
+            stockData.push({
+                id: id,
+                product: product.toUpperCase(),
+                classification: classification,
+                originalStock: stock,
+                stock: stock,
+                adjustments: []
+            });
+            
+            classifications.add(classification);
         }
 
         function loadExcelData() {
@@ -857,14 +1189,14 @@
             classifications.clear();
             
             // Find sheet
-            let sheetName = workbook.SheetNames.find(n => n.match(/balanço|base/i)) || workbook.SheetNames[0];
+            let sheetName = workbook.SheetNames.find(n => n.match(/balanço|base|estoque/i)) || workbook.SheetNames[0];
             const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
             
             // Find header
-            let headerRow = 3; // Default fallback
+            let headerRow = 0;
             for (let i = 0; i < Math.min(20, json.length); i++) {
                 const row = json[i].map(c => String(c).toLowerCase());
-                if (row.includes('produtos') && row.includes('estoque')) {
+                if (row.some(c => c.includes('produto')) && row.some(c => c.includes('estoque'))) {
                     headerRow = i;
                     break;
                 }
@@ -873,18 +1205,19 @@
             // Parse rows
             for (let i = headerRow + 1; i < json.length; i++) {
                 const row = json[i];
-                if (!row || row.length < 4) continue;
+                if (!row || row.length < 2) continue;
                 
-                const rawClass = String(row[1] || '').trim().toUpperCase();
-                const product = String(row[2] || '').trim();
-                let stock = row[3];
+                // Tentar diferentes formatos de coluna
+                const rawClass = row[1] ? String(row[1]).trim().toUpperCase() : 'GERAL';
+                const product = row[2] ? String(row[2]).trim() : String(row[0] || '').trim();
+                let stock = row[3] !== undefined ? row[3] : (row[1] !== undefined ? row[1] : 0);
                 
                 // Validate
-                if (!product || product.match(/total/i) || product === '0') continue;
+                if (!product || product.match(/total|^$/i)) continue;
                 
                 // Clean stock number
                 if (typeof stock === 'string') {
-                    stock = parseFloat(stock.replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+                    stock = parseInt(stock.replace(/[^\d.,-]/g, '')) || 0;
                 }
                 stock = Math.max(0, Math.floor(Number(stock) || 0));
                 
@@ -892,7 +1225,7 @@
                 
                 // Add
                 stockData.push({
-                    id: i, // Unique ID based on row index
+                    id: i,
                     product: product.toUpperCase(),
                     classification: classification,
                     originalStock: stock,
@@ -975,6 +1308,8 @@
         }
 
         function getEmoji(cls) {
+            if (!cls) return '📦';
+            cls = cls.toUpperCase();
             if (cls.includes('LIMPEZA')) return '🧹';
             if (cls.includes('PAPEL')) return '🧻';
             if (cls.includes('SACO')) return '🗑️';
@@ -1066,7 +1401,6 @@
                 
                 // Se estiver conectado, tenta atualizar na nuvem
                 if (apiUrl) {
-                    // Usar setTimeout para não travar a UI
                     setTimeout(() => updateCloudStock(item.id, physical), 10);
                 }
             }
@@ -1078,19 +1412,12 @@
 
         async function updateCloudStock(rowIndex, newStock) {
             try {
-                // Notifica inicio do envio (opcional, pode ser removido se poluir)
-                // showToast('Enviando para nuvem...', 'success');
-                
                 const payload = {
                     action: 'update',
                     rowIndex: rowIndex, 
                     newStock: newStock
                 };
 
-                // Fetch mode 'no-cors' é o padrão para forms do Google Script sem preflight complexo
-                // Mas isso significa que não sabemos se DEU ERRO lá no servidor (status é opaco).
-                // Porém, se a rede falhar, cai no catch.
-                
                 await fetch(apiUrl, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -1101,10 +1428,8 @@
                 });
                 
                 console.log('Comando enviado para nuvem (Row ' + rowIndex + ')');
-                // Como é no-cors, assumimos sucesso se não jogou erro de rede.
             } catch (e) {
                 console.error('Erro ao enviar para nuvem', e);
-                showToast('Erro de conexão com nuvem', 'error');
             }
         }
 
