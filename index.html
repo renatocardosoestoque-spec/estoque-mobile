@@ -38,7 +38,7 @@
     }">
 
     <!-- Ícones para iOS -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0iIzRGMDRFNSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGBsZSIgZHk9Ii4zZW0iPuKZokE8L3RleHQ+PC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyMCIgZmlsbD0iIzRGMDRFNSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjQwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKZokE8L3RleHQ+PC9zdmc+">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -613,26 +613,6 @@
             z-index: 10000;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-
-        /* Botão de atualizar URL */
-        #update-url-btn {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            background: var(--warning);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-            z-index: 9998;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -646,9 +626,6 @@
         <div id="header-actions">
             <!-- Status de sincronização -->
             <div class="sync-status" id="sync-status-indicator" title="Status de sincronização"></div>
-            <button onclick="updateScriptUrl()" style="background:none; border:none; color:var(--warning); cursor:pointer; font-size:1.2rem; margin-right: 10px;" title="Atualizar URL">
-                <i class="fas fa-link"></i>
-            </button>
             <button onclick="syncWithCloud()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1.2rem;" title="Sincronizar com nuvem">
                 <i class="fas fa-sync-alt"></i>
             </button>
@@ -676,18 +653,6 @@
                 <i class="fas fa-file-excel"></i> Carregar Arquivo Local
                 <input type="file" id="file-input" class="file-input" accept=".xlsx, .xls">
             </label>
-
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-                    <i class="fas fa-info-circle"></i> URL configurada:
-                </p>
-                <p id="current-url-display" style="font-size: 0.75rem; background: var(--background); padding: 0.5rem; border-radius: 0.5rem; word-break: break-all;">
-                    Nenhuma URL configurada
-                </p>
-                <button onclick="updateScriptUrl()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; margin-top:0.5rem; cursor:pointer;">
-                    <i class="fas fa-edit"></i> Alterar URL
-                </button>
-            </div>
         </div>
     </div>
 
@@ -705,17 +670,8 @@
             </p>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">URL Atual:</label>
-            <div id="current-url" style="background: #f3f4f6; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.85rem; word-break: break-all;"></div>
-        </div>
-
         <button class="btn btn-primary" onclick="saveConfigAndClose()">
             <i class="fas fa-save"></i> Salvar e Conectar
-        </button>
-        
-        <button class="btn" onclick="testConnection()" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-main); margin-top: 0.5rem;">
-            <i class="fas fa-plug"></i> Testar Conexão
         </button>
     </div>
 
@@ -819,9 +775,6 @@
 
     <!-- Botão de ajuda PWA -->
     <button id="pwa-help-btn" onclick="showInstallHelp()">📲</button>
-
-    <!-- Botão de atualizar URL -->
-    <button id="update-url-btn" onclick="updateScriptUrl()" style="display: none;">🔗</button>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -947,7 +900,6 @@
         function openConfig() {
             document.getElementById('config-overlay').classList.add('active');
             document.getElementById('config-sheet').classList.add('active');
-            document.getElementById('current-url').textContent = apiUrl || 'Nenhuma URL configurada';
         }
 
         function closeConfig() {
@@ -961,7 +913,6 @@
                 localStorage.setItem('googleScriptUrl', url);
                 apiUrl = url;
                 showToast('Configuração salva!', 'success');
-                updateUrlDisplay();
             }
         }
 
@@ -973,103 +924,6 @@
                 document.getElementById('status-title').innerText = 'Conectado à Nuvem';
                 document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
                 showToast('Configuração salva! Pronto para sincronizar.', 'success');
-                updateUrlDisplay();
-            }
-        }
-
-        // Função para atualizar URL rapidamente
-        function updateScriptUrl() {
-            const currentUrl = apiUrl || 'Nenhuma URL configurada';
-            const newUrl = prompt(`URL Atual:\n${currentUrl}\n\nCole a NOVA URL do Google Apps Script:`, apiUrl || 'https://script.google.com/macros/s/...');
-            
-            if (newUrl && newUrl !== currentUrl) {
-                if (newUrl.includes('script.google.com') && newUrl.includes('/macros/s/')) {
-                    localStorage.setItem('googleScriptUrl', newUrl);
-                    apiUrl = newUrl;
-                    document.getElementById('api-url').value = newUrl;
-                    showToast('✅ URL atualizada com sucesso!', 'success');
-                    updateUrlDisplay();
-                    
-                    // Tenta conectar automaticamente
-                    setTimeout(() => {
-                        if (confirm('Deseja testar a nova conexão agora?')) {
-                            syncWithCloud();
-                        }
-                    }, 1000);
-                } else {
-                    showToast('⚠️ URL inválida! Deve ser do Google Apps Script.', 'error');
-                }
-            }
-        }
-
-        // Atualiza exibição da URL
-        function updateUrlDisplay() {
-            const display = document.getElementById('current-url-display');
-            const configDisplay = document.getElementById('current-url');
-            
-            if (apiUrl) {
-                // Mostra apenas o final da URL para economizar espaço
-                const shortUrl = apiUrl.replace('https://script.google.com/macros/s/', '.../');
-                display.textContent = shortUrl;
-                display.title = apiUrl;
-                
-                if (configDisplay) {
-                    configDisplay.textContent = apiUrl;
-                }
-            } else {
-                display.textContent = 'Nenhuma URL configurada';
-                if (configDisplay) {
-                    configDisplay.textContent = 'Nenhuma URL configurada';
-                }
-            }
-        }
-
-        // Testa a conexão com a URL atual
-        async function testConnection() {
-            if (!apiUrl) {
-                showToast('Configure uma URL primeiro!', 'error');
-                return;
-            }
-
-            showLoading(true);
-            showToast('Testando conexão...', 'info');
-            
-            try {
-                const response = await fetch(apiUrl + '?t=' + Date.now(), {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const text = await response.text();
-                let json;
-                
-                try {
-                    json = JSON.parse(text);
-                } catch (e) {
-                    // Tenta extrair JSON de callback
-                    const match = text.match(/callback\((.+)\)/);
-                    if (match) {
-                        json = JSON.parse(match[1]);
-                    } else {
-                        throw new Error('Resposta não é JSON válido');
-                    }
-                }
-                
-                if (json.status === 'success') {
-                    showToast('✅ Conexão OK! Planilha encontrada.', 'success');
-                    console.log('Teste OK:', json);
-                } else {
-                    showToast('⚠️ Conexão estabelecida, mas resposta inesperada', 'warning');
-                }
-            } catch (error) {
-                console.error('Erro no teste:', error);
-                showToast('❌ Falha na conexão: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
             }
         }
         
@@ -1078,8 +932,7 @@
         let classifications = new Set();
         let currentFilter = '';
         let adjustmentType = 'saida';
-        // URL PRINCIPAL configurada - você pode mudar aqui se quiser uma padrão
-        let apiUrl = localStorage.getItem('googleScriptUrl') || 'https://script.google.com/macros/s/AKfycbz6VDh9eY7M9feAJH8LAibL99i6bBCNtl0l--shP8zSgMrfVFLPlXh2RTXdiDgUGKSaRQ/exec';
+        let apiUrl = localStorage.getItem('googleScriptUrl') || '';
 
         // DOM Elements
         const appContent = document.getElementById('app-content');
@@ -1099,19 +952,12 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Configura URL inicial
-            document.getElementById('api-url').value = apiUrl;
-            updateUrlDisplay();
-            
-            if (apiUrl && apiUrl.includes('script.google.com')) {
+            if (apiUrl) {
+                document.getElementById('api-url').value = apiUrl;
                 btnCloud.style.display = 'flex';
                 document.getElementById('status-title').innerText = 'Conectado à Nuvem';
                 document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
-                
-                // Mostra botão de atualizar URL se já estiver configurado
-                document.getElementById('update-url-btn').style.display = 'flex';
             }
-            
             loadFromLocal();
             updatePendingBadge();
             updateSyncIndicator();
@@ -1171,8 +1017,9 @@
                 
                 const payload = {
                     action: 'update',
-                    product: prodName,  // ENVIA NOME DO PRODUTO, não rowIndex
+                    rowIndex: rowIndex, 
                     newStock: newStock,
+                    product: prodName,
                     timestamp: new Date().toISOString()
                 };
 
@@ -1400,7 +1247,6 @@
                 document.getElementById('main-header').style.display = 'flex';
                 appContent.style.display = 'block';
                 document.getElementById('fabs').style.display = 'flex';
-                document.getElementById('update-url-btn').style.display = 'flex';
                 
                 saveToLocal();
                 renderFilters();
@@ -1482,7 +1328,6 @@
                     document.getElementById('main-header').style.display = 'flex';
                     appContent.style.display = 'block';
                     document.getElementById('fabs').style.display = 'flex';
-                    document.getElementById('update-url-btn').style.display = 'flex';
                     
                     saveToLocal();
                     showToast(`${stockData.length} produtos carregados!`, 'success');
@@ -1501,7 +1346,7 @@
             classifications.clear();
             
             let sheetName = workbook.SheetNames.find(n => n.match(/balanço|base|estoque/i)) || workbook.SheetNames[0];
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' );
             
             let headerRow = 0;
             for (let i = 0; i < Math.min(20, json.length); i++) {
@@ -1866,7 +1711,6 @@
                     document.getElementById('main-header').style.display = 'flex';
                     appContent.style.display = 'block';
                     document.getElementById('fabs').style.display = 'flex';
-                    document.getElementById('update-url-btn').style.display = 'flex';
                     
                     renderFilters();
                     renderList();
