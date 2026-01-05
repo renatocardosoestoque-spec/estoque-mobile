@@ -112,6 +112,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
         }
 
         .header-title h1 {
@@ -125,6 +126,28 @@
         .header-title p {
             font-size: 0.75rem;
             color: var(--text-secondary);
+        }
+
+        /* Status de sincronização no header */
+        .sync-status {
+            position: absolute;
+            top: 50%;
+            right: 70px;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6B7280;
+            transition: background 0.3s;
+        }
+        .sync-status.synced { background: #10B981; }
+        .sync-status.pending { background: #F59E0B; animation: pulse 1.5s infinite; }
+        .sync-status.error { background: #EF4444; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
         /* --- Main Content Area --- */
@@ -329,6 +352,18 @@
             top: 0;
         }
         .indicator.adjusted { background: var(--primary); }
+        
+        /* Badge de sincronização pendente */
+        .sync-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #EF4444;
+            animation: pulse 2s infinite;
+        }
 
         /* --- Bottom Sheet Modal --- */
         .modal-overlay {
@@ -457,6 +492,8 @@
             align-items: center;
             gap: 8px;
             white-space: nowrap;
+            max-width: 90%;
+            text-align: center;
         }
         
         .toast.show {
@@ -465,6 +502,8 @@
         
         .toast.success { background: var(--secondary); }
         .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--primary); }
 
         /* --- Loading Overlay --- */
         .loading-overlay {
@@ -539,21 +578,40 @@
         /* Botão de ajuda PWA */
         #pwa-help-btn {
             position: fixed;
-            bottom: 20px;
+            bottom: 90px;
             left: 20px;
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: var(--primary);
             color: white;
             border: none;
             border-radius: 50%;
-            font-size: 24px;
+            font-size: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 9999;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Badge de atualizações pendentes */
+        #pending-badge {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #EF4444;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
     </style>
 </head>
@@ -566,7 +624,11 @@
             <p id="header-subtitle">0 produtos</p>
         </div>
         <div id="header-actions">
-            <!-- Icons added dynamically -->
+            <!-- Status de sincronização -->
+            <div class="sync-status" id="sync-status-indicator" title="Status de sincronização"></div>
+            <button onclick="syncWithCloud()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:1.2rem;" title="Sincronizar com nuvem">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
     </header>
 
@@ -609,7 +671,7 @@
         </div>
 
         <button class="btn btn-primary" onclick="saveConfigAndClose()">
-            Salvar e Conectar
+            <i class="fas fa-save"></i> Salvar e Conectar
         </button>
     </div>
 
@@ -637,6 +699,9 @@
     <div class="fab-container" id="fabs" style="display: none;">
         <button class="fab secondary" onclick="generatePDF()" title="Exportar PDF">
             <i class="fas fa-file-pdf"></i>
+        </button>
+        <button class="fab secondary" onclick="syncPendingUpdates()" title="Sincronizar Pendentes" id="sync-pending-btn" style="display: none; background: #F59E0B; color: white;">
+            <i class="fas fa-cloud-upload-alt"></i>
         </button>
         <button class="fab secondary" onclick="resetData()" title="Limpar Dados / Novo Upload" style="background: #EF4444; color: white;">
             <i class="fas fa-trash"></i>
@@ -679,7 +744,7 @@
         </div>
 
         <button class="btn btn-primary" onclick="confirmAdjustment()">
-            Confirmar Ajuste
+            <i class="fas fa-check"></i> Confirmar Ajuste
         </button>
     </div>
 
@@ -691,7 +756,9 @@
         <div id="history-list" style="overflow-y: auto; max-height: 60vh;">
             <!-- History items -->
         </div>
-        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="closeHistory()">Fechar</button>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="closeHistory()">
+            <i class="fas fa-times"></i> Fechar
+        </button>
     </div>
 
     <!-- Loading & Toast -->
@@ -702,6 +769,9 @@
     <div class="toast" id="toast">
         <i class="fas fa-check-circle"></i> <span>Mensagem</span>
     </div>
+
+    <!-- Badge de atualizações pendentes -->
+    <div id="pending-badge"></div>
 
     <!-- Botão de ajuda PWA -->
     <button id="pwa-help-btn" onclick="showInstallHelp()">📲</button>
@@ -724,8 +794,6 @@
         if (isRunningAsPWA()) {
             document.documentElement.style.setProperty('--background', '#ffffff');
             document.body.classList.add('pwa-mode');
-            
-            // Remove barras de endereço em PWA
             window.scrollTo(0, 1);
         }
 
@@ -744,7 +812,6 @@
             e.preventDefault();
             deferredPrompt = e;
             
-            // Mostra botão de instalação
             const installBtn = document.createElement('button');
             installBtn.innerHTML = '📲 INSTALAR APP';
             installBtn.style.cssText = `
@@ -757,7 +824,6 @@
                 animation: pulse 2s infinite;
             `;
             
-            // Estilo de animação
             const style = document.createElement('style');
             style.textContent = `
                 @keyframes pulse {
@@ -776,8 +842,6 @@
             };
             
             document.body.appendChild(installBtn);
-            
-            // Remove após 30 segundos
             setTimeout(() => installBtn.remove(), 30000);
         });
 
@@ -826,8 +890,6 @@
                         </div>
                     `;
                     document.body.appendChild(iosTip);
-                    
-                    // Remove após 15 segundos
                     setTimeout(() => iosTip.remove(), 15000);
                 }
             }, 3000);
@@ -850,6 +912,7 @@
             if (url) {
                 localStorage.setItem('googleScriptUrl', url);
                 apiUrl = url;
+                showToast('Configuração salva!', 'success');
             }
         }
 
@@ -860,6 +923,7 @@
                 document.getElementById('btn-cloud').style.display = 'flex';
                 document.getElementById('status-title').innerText = 'Conectado à Nuvem';
                 document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
+                showToast('Configuração salva! Pronto para sincronizar.', 'success');
             }
         }
         
@@ -895,6 +959,8 @@
                 document.getElementById('status-desc').innerText = 'Toque em Sincronizar para atualizar.';
             }
             loadFromLocal();
+            updatePendingBadge();
+            updateSyncIndicator();
         });
 
         fileInput.addEventListener('change', loadExcelData);
@@ -914,7 +980,162 @@
             renderList();
         }
 
-        // --- Core Functions ---
+        // ===== SISTEMA DE SINCRONIZAÇÃO BIDIRECIONAL =====
+        
+        // Atualiza indicador de sincronização
+        function updateSyncIndicator(status = '') {
+            const indicator = document.getElementById('sync-status-indicator');
+            if (!indicator) return;
+            
+            if (status === 'syncing') {
+                indicator.className = 'sync-status pending';
+                indicator.title = 'Sincronizando...';
+            } else if (status === 'success') {
+                indicator.className = 'sync-status synced';
+                indicator.title = 'Sincronizado';
+                setTimeout(() => updateSyncIndicator(''), 3000);
+            } else if (status === 'error') {
+                indicator.className = 'sync-status error';
+                indicator.title = 'Erro na sincronização';
+                setTimeout(() => updateSyncIndicator(''), 5000);
+            } else {
+                indicator.className = 'sync-status';
+                indicator.title = 'Status de conexão';
+            }
+        }
+
+        // ENVIA atualização para a planilha Google
+        async function updateCloudStock(rowIndex, newStock, productName) {
+            // Pega o nome do produto
+            const item = stockData.find(p => p.id === rowIndex);
+            const prodName = productName || (item ? item.product : 'Produto ' + rowIndex);
+            
+            try {
+                // Mostra notificação
+                showToast('📤 Enviando para planilha...', 'info');
+                updateSyncIndicator('syncing');
+                
+                const payload = {
+                    action: 'update',
+                    rowIndex: rowIndex, 
+                    newStock: newStock,
+                    product: prodName,
+                    timestamp: new Date().toISOString()
+                };
+
+                // ENVIA com CORS normal
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showToast('✅ Planilha atualizada!', 'success');
+                    updateSyncIndicator('success');
+                    console.log('Sucesso:', result);
+                } else {
+                    throw new Error(result.message || 'Erro desconhecido');
+                }
+                
+            } catch (e) {
+                console.error('❌ Erro ao enviar para nuvem:', e);
+                showToast('⚠️ Atualização salva localmente', 'warning');
+                updateSyncIndicator('error');
+                
+                // Salva para tentar depois
+                savePendingUpdate(rowIndex, newStock, prodName);
+            }
+        }
+
+        // Salva atualizações pendentes
+        function savePendingUpdate(rowIndex, newStock, productName) {
+            let pending = JSON.parse(localStorage.getItem('pendingUpdates') || '[]');
+            pending.push({
+                rowIndex: rowIndex,
+                newStock: newStock,
+                product: productName,
+                timestamp: new Date().getTime()
+            });
+            localStorage.setItem('pendingUpdates', JSON.stringify(pending));
+            
+            updatePendingBadge();
+        }
+
+        // Mostra badge de atualizações pendentes
+        function updatePendingBadge() {
+            const pending = JSON.parse(localStorage.getItem('pendingUpdates') || '[]');
+            const badge = document.getElementById('pending-badge');
+            const syncBtn = document.getElementById('sync-pending-btn');
+            
+            if (pending.length > 0) {
+                badge.textContent = pending.length;
+                badge.style.display = 'flex';
+                badge.title = `${pending.length} atualizações pendentes`;
+                
+                if (syncBtn) syncBtn.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+                if (syncBtn) syncBtn.style.display = 'none';
+            }
+        }
+
+        // Tenta enviar pendentes
+        async function syncPendingUpdates() {
+            const pending = JSON.parse(localStorage.getItem('pendingUpdates') || '[]');
+            if (pending.length === 0) return;
+            
+            showToast(`🔄 Enviando ${pending.length} pendentes...`, 'info');
+            updateSyncIndicator('syncing');
+            
+            const success = [];
+            
+            for (const update of [...pending]) {
+                try {
+                    await updateCloudStock(update.rowIndex, update.newStock, update.product);
+                    success.push(update);
+                } catch (e) {
+                    console.log('Pendente falhou:', e);
+                }
+            }
+            
+            // Remove os bem-sucedidos
+            if (success.length > 0) {
+                const newPending = pending.filter(p => 
+                    !success.some(s => s.timestamp === p.timestamp)
+                );
+                localStorage.setItem('pendingUpdates', JSON.stringify(newPending));
+                updatePendingBadge();
+            }
+            
+            if (success.length === pending.length) {
+                updateSyncIndicator('success');
+            }
+        }
+
+        // Sincroniza quando volta online
+        window.addEventListener('online', () => {
+            showToast('🌐 Conectado - sincronizando...', 'success');
+            syncPendingUpdates();
+        });
+
+        // Sincroniza a cada 30 segundos se online
+        setInterval(() => {
+            if (navigator.onLine && apiUrl) {
+                syncPendingUpdates();
+            }
+        }, 30000);
+
+        // ===== FUNÇÕES PRINCIPAIS DO APP =====
 
         async function syncWithCloud() {
             if (!apiUrl) {
@@ -923,13 +1144,10 @@
             }
 
             showLoading(true);
-            showToast('Conectando com nuvem...', 'success');
+            showToast('Conectando com nuvem...', 'info');
+            updateSyncIndicator('syncing');
             
             try {
-                // Método 1: Tentar fetch normal
-                console.log('Tentando fetch para:', apiUrl);
-                
-                // Adicionar timestamp para evitar cache
                 const urlWithCacheBuster = apiUrl + (apiUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
                 
                 const response = await fetch(urlWithCacheBuster, {
@@ -940,22 +1158,17 @@
                     }
                 });
                 
-                console.log('Resposta recebida:', response);
-                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const text = await response.text();
-                console.log('Texto recebido:', text.substring(0, 200));
                 
                 // Tentar parsear como JSON
                 let json;
                 try {
                     json = JSON.parse(text);
                 } catch (e) {
-                    // Se não for JSON, pode ser JSONP ou texto simples
-                    // Tenta extrair JSON de dentro de callback
                     const match = text.match(/callback\((.+)\)/);
                     if (match) {
                         json = JSON.parse(match[1]);
@@ -973,68 +1186,18 @@
                 
                 if (success) {
                     showToast('Sincronizado com sucesso!', 'success');
+                    updateSyncIndicator('success');
+                    
+                    // Tenta sincronizar pendentes após carregar
+                    setTimeout(syncPendingUpdates, 1000);
                 }
             } catch (error) {
                 console.error('Erro detalhado:', error);
                 showToast('Erro: ' + error.message, 'error');
-                
-                // Método alternativo: usar script tag (JSONP)
-                try {
-                    await fetchViaJSONP();
-                } catch (jsonpError) {
-                    console.error('JSONP também falhou:', jsonpError);
-                }
+                updateSyncIndicator('error');
             } finally {
                 showLoading(false);
             }
-        }
-
-        // Método alternativo JSONP
-        function fetchViaJSONP() {
-            return new Promise((resolve, reject) => {
-                if (!apiUrl) {
-                    reject(new Error('URL não configurada'));
-                    return;
-                }
-                
-                const callbackName = 'jsonp_callback_' + Date.now();
-                const script = document.createElement('script');
-                
-                window[callbackName] = function(data) {
-                    delete window[callbackName];
-                    document.body.removeChild(script);
-                    
-                    const success = processCloudData(data.data || data);
-                    if (success) {
-                        showToast('Sincronizado via JSONP!', 'success');
-                        resolve(data);
-                    } else {
-                        reject(new Error('Falha ao processar dados JSONP'));
-                    }
-                };
-                
-                // Adicionar callback à URL
-                let jsonpUrl = apiUrl;
-                if (!jsonpUrl.includes('callback=')) {
-                    jsonpUrl += (jsonpUrl.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-                }
-                
-                script.src = jsonpUrl;
-                script.onerror = () => {
-                    delete window[callbackName];
-                    document.body.removeChild(script);
-                    reject(new Error('Falha ao carregar script'));
-                };
-                
-                document.body.appendChild(script);
-                setTimeout(() => {
-                    if (script.parentNode) {
-                        delete window[callbackName];
-                        document.body.removeChild(script);
-                        reject(new Error('Timeout JSONP'));
-                    }
-                }, 10000);
-            });
         }
 
         function processCloudData(data) {
@@ -1049,19 +1212,16 @@
                 
                 // Se data é um array de arrays (planilha)
                 if (Array.isArray(data[0])) {
-                    // Encontrar cabeçalhos
                     let idxProd = -1, idxClass = -1, idxStock = -1;
                     
                     for (let i = 0; i < Math.min(5, data.length); i++) {
                         const row = data[i].map(c => String(c).toLowerCase());
                         
-                        // Procurar colunas
                         if (idxProd === -1) idxProd = row.findIndex(c => c.includes('produto') || c.includes('descri'));
                         if (idxStock === -1) idxStock = row.findIndex(c => c.includes('estoque') || c.includes('quant'));
                         if (idxClass === -1) idxClass = row.findIndex(c => c.includes('class') || c.includes('categ'));
                         
                         if (idxProd !== -1 && idxStock !== -1) {
-                            // Processar a partir da próxima linha
                             for (let j = i + 1; j < data.length; j++) {
                                 addProductFromRow(data[j], idxProd, idxClass, idxStock, j);
                             }
@@ -1069,7 +1229,6 @@
                         }
                     }
                 } else {
-                    // Se data já é array de objetos
                     data.forEach((item, index) => {
                         addProductFromObject(item, index);
                     });
@@ -1093,7 +1252,6 @@
                 renderFilters();
                 renderList();
                 updateSubtitle();
-                showToast(`${stockData.length} produtos carregados da nuvem!`, 'success');
                 
                 return true;
             } catch (error) {
@@ -1166,7 +1324,6 @@
                     const workbook = XLSX.read(data, { type: 'array' });
                     processData(workbook);
                     
-                    // Switch view
                     uploadScreen.style.display = 'none';
                     document.getElementById('main-header').style.display = 'flex';
                     appContent.style.display = 'block';
@@ -1188,11 +1345,9 @@
             stockData = [];
             classifications.clear();
             
-            // Find sheet
             let sheetName = workbook.SheetNames.find(n => n.match(/balanço|base|estoque/i)) || workbook.SheetNames[0];
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' );
             
-            // Find header
             let headerRow = 0;
             for (let i = 0; i < Math.min(20, json.length); i++) {
                 const row = json[i].map(c => String(c).toLowerCase());
@@ -1202,20 +1357,16 @@
                 }
             }
 
-            // Parse rows
             for (let i = headerRow + 1; i < json.length; i++) {
                 const row = json[i];
                 if (!row || row.length < 2) continue;
                 
-                // Tentar diferentes formatos de coluna
                 const rawClass = row[1] ? String(row[1]).trim().toUpperCase() : 'GERAL';
                 const product = row[2] ? String(row[2]).trim() : String(row[0] || '').trim();
                 let stock = row[3] !== undefined ? row[3] : (row[1] !== undefined ? row[1] : 0);
                 
-                // Validate
                 if (!product || product.match(/total|^$/i)) continue;
                 
-                // Clean stock number
                 if (typeof stock === 'string') {
                     stock = parseInt(stock.replace(/[^\d.,-]/g, '')) || 0;
                 }
@@ -1223,7 +1374,6 @@
                 
                 const classification = rawClass || 'GERAL';
                 
-                // Add
                 stockData.push({
                     id: i,
                     product: product.toUpperCase(),
@@ -1236,7 +1386,6 @@
                 classifications.add(classification);
             }
             
-            // Sort
             stockData.sort((a, b) => a.product.localeCompare(b.product));
             
             renderFilters();
@@ -1257,7 +1406,6 @@
         function filterByClass(cls, el) {
             currentFilter = cls;
             
-            // Update UI
             if (el) {
                 document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
                 el.classList.add('active');
@@ -1328,7 +1476,6 @@
             document.getElementById('modal-physical-stock').value = '';
             document.getElementById('modal-diff').value = '-';
             
-            // Reset state
             document.getElementById('opt-entrada').classList.remove('selected');
             document.getElementById('opt-saida').classList.remove('selected');
             
@@ -1399,38 +1546,15 @@
                 showToast('Estoque atualizado!', 'success');
                 saveToLocal();
                 
-                // Se estiver conectado, tenta atualizar na nuvem
+                // ATUALIZA DIRETAMENTE NA PLANILHA
                 if (apiUrl) {
-                    setTimeout(() => updateCloudStock(item.id, physical), 10);
+                    setTimeout(() => updateCloudStock(item.id, physical, item.product), 10);
                 }
             }
             
             closeModal();
             renderList(document.getElementById('search-input').value);
             updateSubtitle();
-        }
-
-        async function updateCloudStock(rowIndex, newStock) {
-            try {
-                const payload = {
-                    action: 'update',
-                    rowIndex: rowIndex, 
-                    newStock: newStock
-                };
-
-                await fetch(apiUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                console.log('Comando enviado para nuvem (Row ' + rowIndex + ')');
-            } catch (e) {
-                console.error('Erro ao enviar para nuvem', e);
-            }
         }
 
         function closeModal() {
@@ -1485,7 +1609,6 @@
             
             showLoading(true);
             
-            // Create hidden temp container for PDF generation
             const tempDiv = document.createElement('div');
             tempDiv.style.width = '800px';
             tempDiv.style.padding = '40px';
@@ -1576,7 +1699,6 @@
                 try {
                     const parsed = JSON.parse(saved);
                     stockData = parsed.stockData;
-                    // Restore dates in adjustments
                     stockData.forEach(item => {
                         item.adjustments.forEach(adj => {
                             adj.date = new Date(adj.date);
@@ -1585,7 +1707,6 @@
                     
                     classifications = new Set(parsed.classifications);
                     
-                    // Switch view
                     uploadScreen.style.display = 'none';
                     document.getElementById('main-header').style.display = 'flex';
                     appContent.style.display = 'block';
@@ -1605,6 +1726,7 @@
         function resetData() {
             if (confirm('Tem certeza? Isso apagará todos os dados atuais e ajustes não salvos.')) {
                 localStorage.removeItem('estoqueData');
+                localStorage.removeItem('pendingUpdates');
                 location.reload();
             }
         }
@@ -1622,7 +1744,10 @@
             toast.className = `toast ${type} show`;
             
             const icon = toast.querySelector('i');
-            icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            if (type === 'success') icon.className = 'fas fa-check-circle';
+            else if (type === 'error') icon.className = 'fas fa-exclamation-circle';
+            else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
+            else icon.className = 'fas fa-info-circle';
             
             setTimeout(() => {
                 toast.classList.remove('show');
